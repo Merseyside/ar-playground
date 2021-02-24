@@ -1,0 +1,16 @@
+<resources>
+
+    <style name="Theme.NewsApp.21" parent="Theme.NewsApp.Base">
+        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:statusBarColor">@color/grey</item>
+    </style>
+
+    <style name="Theme.NewsApp" parent="Theme.NewsApp.21"/>
+
+    <style name="Theme.NewsApp.Light.OppositeStatusBar" parent="Theme.NewsApp">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+</resources>
