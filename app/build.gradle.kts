@@ -13,8 +13,6 @@ plugins {
 android {
     compileSdkVersion(BuildAndroidConfig.COMPILE_SDK_VERSION)
 
-    buildFeatures.dataBinding = true
-
     dexOptions {
         javaMaxHeapSize = "2g"
     }
@@ -22,12 +20,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "1.8"
-        }
     }
 
     defaultConfig {
@@ -43,6 +35,8 @@ android {
 
         multiDexEnabled = true
     }
+
+    buildFeatures.dataBinding = true
 
     flavorDimensions(BuildProductDimensions.ENVIRONMENT)
     productFlavors {
@@ -84,6 +78,12 @@ android {
     }
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
 val androidLibs = listOf(
     Dependencies.APPCOMPAT,
     Dependencies.MATERIAL,
@@ -93,7 +93,8 @@ val androidLibs = listOf(
     Dependencies.LIFECYCLE_VIEWMODEL,
     Dependencies.CONSTRAINT_LAYOUT,
     Dependencies.DAGGER,
-    Dependencies.TYPED_DATASTORE
+    Dependencies.TYPED_DATASTORE,
+    Dependencies.AR_CORE
 )
 
 val modulez = listOf(

@@ -1,16 +1,17 @@
-package com.merseyside.template.splash
+package com.merseyside.ar.splash
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
-import com.merseyside.archy.presentation.activity.BaseActivity
-import com.merseyside.template.R
-import com.merseyside.template.news.main.view.MainActivity
+import com.merseyside.ar.R
+import com.merseyside.ar.databinding.ActivitySplashBinding
+import com.merseyside.ar.sample.main.view.ArActivity
+import com.merseyside.archy.presentation.activity.BaseBindingActivity
 import com.merseyside.utils.HandlerCanceller
 import com.merseyside.utils.delayedMainThread
 import com.merseyside.utils.time.Seconds
 
-class SplashActivity : BaseActivity() {
+class SplashActivity : BaseBindingActivity<ActivitySplashBinding>() {
 
     private lateinit var canceller: HandlerCanceller
 
@@ -32,7 +33,7 @@ class SplashActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         canceller = delayedMainThread(Seconds(2)) {
-            val intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, ArActivity::class.java)
             startActivity(intent)
         }
     }

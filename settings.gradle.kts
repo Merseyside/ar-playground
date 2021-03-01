@@ -7,7 +7,7 @@ include(
     ":commons:views"
 )
 
-private val isLocalDependencies = false
+private val isLocalDependencies = true
 
 if (isLocalDependencies) {
 
@@ -29,5 +29,5 @@ if (isLocalDependencies) {
 
 }
 
-rootProject.name="android-template"
+rootProject.name="ar-playground"
 rootProject.buildFileName = "build.gradle.kts"

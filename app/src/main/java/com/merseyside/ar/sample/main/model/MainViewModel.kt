@@ -1,4 +1,4 @@
-package com.merseyside.template.news.main.model
+package com.merseyside.ar.sample.main.model
 
 import android.content.Context
 import com.merseyside.archy.presentation.model.BaseViewModel

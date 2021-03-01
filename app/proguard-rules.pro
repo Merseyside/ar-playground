@@ -31,11 +31,11 @@
 
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.SerializationKt
--keep,includedescriptorclasses class com.merseyside.template.**$$serializer { *; }
--keepclassmembers class com.merseyside.template.** {
+-keep,includedescriptorclasses class com.merseyside.ar.**$$serializer { *; }
+-keepclassmembers class com.merseyside.ar.** {
     *** Companion;
 }
--keepclasseswithmembers class com.merseyside.template.** {
+-keepclasseswithmembers class com.merseyside.ar.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 

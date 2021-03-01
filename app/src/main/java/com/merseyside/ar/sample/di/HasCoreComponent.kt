@@ -1,7 +1,7 @@
-package com.merseyside.template.news.di
+package com.merseyside.ar.sample.di
 
 import com.merseyside.core.di.CoreComponent
-import com.merseyside.template.news.application
+import com.merseyside.ar.sample.application
 
 interface HasCoreComponent {
 

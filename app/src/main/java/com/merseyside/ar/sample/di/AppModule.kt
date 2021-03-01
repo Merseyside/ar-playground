@@ -1,7 +1,7 @@
-package com.merseyside.template.news.di
+package com.merseyside.ar.sample.di
 
 import android.content.Context
-import com.merseyside.template.news.App
+import com.merseyside.ar.sample.App
 import dagger.Module
 import dagger.Provides
 

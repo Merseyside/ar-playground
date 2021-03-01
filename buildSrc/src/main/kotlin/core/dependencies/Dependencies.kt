@@ -34,6 +34,8 @@ object Dependencies {
     const val TYPED_DATASTORE = "androidx.datastore:datastore:${BuildDependenciesVersions.TYPED_DATASTORE}"
     const val COIL = "io.coil-kt:coil:${BuildDependenciesVersions.COIL}"
 
+    const val AR_CORE = "com.google.ar:core:${BuildDependenciesVersions.AR_CORE}"
+
     object MerseyLibs {
         private const val base = "com.github.Merseyside.mersey-android-library"
         const val archy = "$base:archy:${BuildDependenciesVersions.MERSEY_LIBS}"

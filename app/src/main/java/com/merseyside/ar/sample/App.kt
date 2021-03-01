@@ -1,4 +1,4 @@
-package com.merseyside.template.news
+package com.merseyside.ar.sample
 
 import com.merseyside.archy.BaseApplication
 import com.merseyside.core.di.CoreComponent

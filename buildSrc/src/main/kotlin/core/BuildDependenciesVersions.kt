@@ -28,5 +28,7 @@ object BuildDependenciesVersions {
     const val RETROFIT_SERIALIZATION = "0.5.0"
     const val TYPED_DATASTORE = "1.0.0-alpha06"
 
+    const val AR_CORE = "1.23.0"
+
     const val MERSEY_LIBS = "1.3.2"
 }
