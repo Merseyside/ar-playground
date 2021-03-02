@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Template App</string>
+    <string name="app_name">Walls App</string>
+    <string name="model_grid_png">models/trigrid.png</string>
 </resources>

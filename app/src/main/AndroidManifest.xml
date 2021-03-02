@@ -20,7 +20,7 @@
             android:screenOrientation="portrait">
         </activity>
 
-        <activity android:name="com.merseyside.ar.sample.main.view.ArActivity"
+        <activity android:name="com.merseyside.ar.sample.main.view.WallsActivity"
             android:screenOrientation="locked">
 
             <intent-filter>

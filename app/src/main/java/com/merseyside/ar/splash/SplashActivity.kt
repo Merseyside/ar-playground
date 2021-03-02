@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.widget.Toolbar
 import com.merseyside.ar.R
 import com.merseyside.ar.databinding.ActivitySplashBinding
-import com.merseyside.ar.sample.main.view.ArActivity
+import com.merseyside.ar.sample.main.view.WallsActivity
 import com.merseyside.archy.presentation.activity.BaseBindingActivity
 import com.merseyside.utils.HandlerCanceller
 import com.merseyside.utils.delayedMainThread
@@ -33,7 +33,7 @@ class SplashActivity : BaseBindingActivity<ActivitySplashBinding>() {
         super.onCreate(savedInstanceState)
 
         canceller = delayedMainThread(Seconds(2)) {
-            val intent = Intent(this, ArActivity::class.java)
+            val intent = Intent(this, WallsActivity::class.java)
             startActivity(intent)
         }
     }
