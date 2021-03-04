@@ -91,10 +91,12 @@ val androidLibs = listOf(
     Dependencies.FRAGMENT_KTX,
     Dependencies.RECYCLE_VIEW,
     Dependencies.LIFECYCLE_VIEWMODEL,
+    Dependencies.LIFECYCLE_RUNTIME,
     Dependencies.CONSTRAINT_LAYOUT,
     Dependencies.DAGGER,
     Dependencies.TYPED_DATASTORE,
-    Dependencies.AR_CORE
+    Dependencies.AR_CORE,
+    Dependencies.OBJ_LOADER
 )
 
 val modulez = listOf(

@@ -29,6 +29,7 @@ object BuildDependenciesVersions {
     const val TYPED_DATASTORE = "1.0.0-alpha06"
 
     const val AR_CORE = "1.23.0"
+    const val OBJ_LOADER = "0.3.0"
 
     const val MERSEY_LIBS = "1.3.2"
 }

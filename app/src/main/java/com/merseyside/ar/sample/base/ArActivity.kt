@@ -6,17 +6,20 @@ import android.os.Bundle
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
-import android.view.SurfaceView
 import android.widget.Toast
 import androidx.databinding.ViewDataBinding
-import com.google.ar.core.ArCoreApk
-import com.google.ar.core.R
-import com.google.ar.core.Session
+import com.google.ar.core.*
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.merseyside.ar.R
+import com.merseyside.ar.helpers.DisplayRotationHelper
+import com.merseyside.ar.helpers.TrackingStateHelper
 import com.merseyside.ar.rendering.BackgroundRenderer
+import com.merseyside.ar.rendering.PlaneAttachment
 import com.merseyside.ar.rendering.PlaneRenderer
 import com.merseyside.ar.sample.utils.CameraPermissionHelper
 import com.merseyside.archy.presentation.activity.BaseBindingActivity
+import com.merseyside.utils.Logger.log
+import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.logMsg
 import java.io.IOException
 import java.util.concurrent.ArrayBlockingQueue
@@ -28,10 +31,12 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     private var mUserRequestedInstall = true
     private var session: Session? = null
     private lateinit var gestureDetector: GestureDetector
+    private lateinit var displayRotationHelper: DisplayRotationHelper
 
     private val maxAllocationSize = 16
     private val anchorMatrix = FloatArray(maxAllocationSize)
     private val queuedSingleTaps = ArrayBlockingQueue<MotionEvent>(maxAllocationSize)
+    private lateinit var trackingStateHelper: TrackingStateHelper
 
     private val backgroundRenderer: BackgroundRenderer = BackgroundRenderer()
     private val planeRenderer: PlaneRenderer = PlaneRenderer()
@@ -41,7 +46,11 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        displayRotationHelper = DisplayRotationHelper(this)
+        trackingStateHelper = TrackingStateHelper(this)
+
         setupTapDetector()
+        setupSurfaceView()
     }
 
     override fun onResume() {
@@ -49,6 +58,18 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
         if (checkCameraPermission()) {
             installAr()
         }
+
+        surfaceView.onResume()
+        session?.resume()
+        displayRotationHelper.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        surfaceView.onPause()
+        session?.pause()
+        displayRotationHelper.onPause()
     }
 
     private fun checkArAvailability() = ArCoreApk.getInstance().checkAvailability(this)
@@ -85,14 +106,14 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
 
     private fun setupSurfaceView() {
         // Set up renderer.
-        surfaceView.apply {
-            preserveEGLContextOnPause = true
-            setEGLContextClientVersion(2)
-            setEGLConfigChooser(8, 8, 8, 8, maxAllocationSize, 0)
-            setRenderer(this@ArActivity)
-            renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
-            setWillNotDraw(false)
-            setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        surfaceView.let {
+            it.preserveEGLContextOnPause = true
+            it.setEGLContextClientVersion(2)
+            it.setEGLConfigChooser(8, 8, 8, 8, maxAllocationSize, 0)
+            it.setRenderer(this)
+            it.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+            it.setWillNotDraw(false)
+            it.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
         }
     }
 
@@ -141,7 +162,9 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     }
 
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
+        logMsg("Surface created")
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
+
 
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
         try {
@@ -149,32 +172,112 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
             backgroundRenderer.createOnGlThread(this)
             planeRenderer.createOnGlThread(this, getString(R.string.model_grid_png))
 
-            // TODO - set up the objects
-            // 1
-            vikingObject.createOnGlThread(this@MainActivity, getString(R.string.model_viking_obj), getString(
-                R.string.model_viking_png))
-            cannonObject.createOnGlThread(this@MainActivity, getString(R.string.model_cannon_obj), getString(
-                R.string.model_cannon_png))
-            targetObject.createOnGlThread(this@MainActivity, getString(R.string.model_target_obj), getString(
-                R.string.model_target_png))
-
-            // 2
-            targetObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
-            vikingObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
-            cannonObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
+            onSurfaceCreated()
 
         } catch (e: IOException) {
             Log.e(TAG, getString(R.string.failed_to_read_asset), e)
         }
     }
 
-    override fun onSurfaceChanged(p0: GL10?, p1: Int, p2: Int) {
-        TODO("Not yet implemented")
+    override fun onSurfaceChanged(p0: GL10?, width: Int, height: Int) {
+        displayRotationHelper.onSurfaceChanged(width, height)
+        GLES20.glViewport(0, 0, width, height)
     }
 
     override fun onDrawFrame(p0: GL10?) {
-        TODO("Not yet implemented")
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
+
+        session?.let {
+            // Notify ARCore session that the view size changed
+            displayRotationHelper.updateSessionIfNeeded(it)
+
+            try {
+                it.setCameraTextureName(backgroundRenderer.textureId)
+
+                val frame = it.update()
+                val camera = frame.camera
+//
+                handleTap(frame, camera)
+                drawBackground(frame)
+//
+                trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
+//
+                onDrawFrame(camera, frame)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun drawBackground(frame: Frame) {
+        backgroundRenderer.draw(frame)
+    }
+
+    private fun handleTap(frame: Frame, camera: Camera) {
+        val tap = queuedSingleTaps.poll()
+
+        if (tap != null && camera.trackingState == TrackingState.TRACKING) {
+            // Check if any plane was hit, and if it was hit inside the plane polygon
+                onTap(camera, frame, frame.hitTest(tap))
+        }
+    }
+
+    fun computeProjectionMatrix(camera: Camera): FloatArray {
+        val projectionMatrix = FloatArray(maxAllocationSize)
+        camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f)
+
+        return projectionMatrix
+    }
+
+    fun computeViewMatrix(camera: Camera): FloatArray {
+        val viewMatrix = FloatArray(maxAllocationSize)
+        camera.getViewMatrix(viewMatrix, 0)
+
+        return viewMatrix
+    }
+
+    /**
+     * Compute lighting from average intensity of the image.
+     */
+    fun computeLightIntensity(frame: Frame): FloatArray {
+        val lightIntensity = FloatArray(4)
+        frame.lightEstimate.getColorCorrection(lightIntensity, 0)
+
+        return lightIntensity
+    }
+
+    /**
+     *  Visualizes planes.
+     */
+    fun visualizePlanes(camera: Camera, projectionMatrix: FloatArray) {
+        planeRenderer.drawPlanes(
+            session!!.getAllTrackables(Plane::class.java),
+            camera.displayOrientedPose,
+            projectionMatrix
+        )
+    }
+
+    fun addSessionAnchorFromAttachment(
+        previousAttachment: PlaneAttachment?,
+        hit: HitResult
+    ): PlaneAttachment? {
+        // 1
+        previousAttachment?.anchor?.detach()
+
+        // 2
+        val plane = hit.trackable as Plane
+        val anchor = session!!.createAnchor(hit.hitPose)
+
+        // 3
+        return PlaneAttachment(plane, anchor)
     }
 
     abstract fun getSurfaceViewId(): Int
+    abstract fun onSurfaceCreated()
+    abstract fun onDrawFrame(camera: Camera, frame: Frame)
+    abstract fun onTap(camera: Camera, frame: Frame, hitResults: List<HitResult>)
+
+    companion object {
+        private const val TAG = "ArActivity"
+    }
 }

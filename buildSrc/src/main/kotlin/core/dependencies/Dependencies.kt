@@ -19,6 +19,7 @@ object Dependencies {
     const val NAVIGATION_UI = "androidx.navigation:navigation-ui-ktx:${BuildDependenciesVersions.NAVIGATION}"
     const val LIFECYCLE_VIEWMODEL = "androidx.lifecycle:lifecycle-viewmodel-ktx:${BuildDependenciesVersions.LIFECYCLE}"
     const val LIFECYCLE_VIEWMODEL_SAVEDSTATE = "androidx.lifecycle:lifecycle-viewmodel-savedstate:${BuildDependenciesVersions.LIFECYCLE}"
+    const val LIFECYCLE_RUNTIME = "androidx.lifecycle:lifecycle-runtime-ktx:${BuildDependenciesVersions.LIFECYCLE}"
     const val LIFECYCLE_LIVEDATA = "androidx.lifecycle:lifecycle-livedata-ktx:${BuildDependenciesVersions.LIFECYCLE}"
     const val CORE_KTX = "androidx.core:core-ktx:${BuildDependenciesVersions.CORE_KTX}"
     const val ACTIVITY_KTX = "androidx.activity:activity:${BuildDependenciesVersions.ACTIVITY_KTX}"
@@ -35,6 +36,7 @@ object Dependencies {
     const val COIL = "io.coil-kt:coil:${BuildDependenciesVersions.COIL}"
 
     const val AR_CORE = "com.google.ar:core:${BuildDependenciesVersions.AR_CORE}"
+    const val OBJ_LOADER = "de.javagl:obj:${BuildDependenciesVersions.OBJ_LOADER}"
 
     object MerseyLibs {
         private const val base = "com.github.Merseyside.mersey-android-library"
