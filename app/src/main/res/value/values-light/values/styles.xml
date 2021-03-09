@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Light application theme. -->
-    <style name="Theme.NewsApp.Base" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.WallsApp.Base" parent="Theme.MaterialComponents.Light.NoActionBar">
 
         <item name="colorPrimary">@color/white</item>
         <item name="colorPrimaryDark">@color/light_dark</item>

@@ -1,5 +1,12 @@
 <resources>
     <string name="app_name">Walls App</string>
+
     <string name="model_grid_png">models/trigrid.png</string>
+    <string name="model_target_png">models/target.png</string>
+    <string name="model_target_obj">models/target.obj</string>
+
     <string name="failed_to_read_asset">Failed to read an asset file</string>
+
+    <string name="reset">Reset</string>
+    <string name="put">Put</string>
 </resources>

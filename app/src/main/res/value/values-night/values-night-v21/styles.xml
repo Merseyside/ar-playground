@@ -1,13 +1,13 @@
 <resources>
 
-    <style name="Theme.NewsApp.21" parent="Theme.NewsApp.Base">
+    <style name="Theme.WallsApp.21" parent="Theme.WallsApp.Base">
         <item name="android:navigationBarColor">@color/dark</item>
         <item name="android:statusBarColor">@color/dark</item>
     </style>
 
-    <style name="Theme.NewsApp" parent="Theme.NewsApp.21"/>
+    <style name="Theme.WallsApp" parent="Theme.WallsApp.21"/>
 
-    <style name="Theme.NewsApp.Light.OppositeStatusBar" parent="Theme.NewsApp">
+    <style name="Theme.WallsApp.Light.OppositeStatusBar" parent="Theme.WallsApp">
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowContentOverlay">@null</item>

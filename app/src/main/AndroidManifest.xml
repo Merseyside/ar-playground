@@ -16,7 +16,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name="com.merseyside.ar.sample.App"
-        android:theme="@style/Theme.NewsApp">
+        android:theme="@style/Theme.WallsApp">
 
         <activity
             android:name="com.merseyside.ar.splash.SplashActivity"

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.NewsApp.23" parent="Theme.NewsApp.21">
+    <style name="Theme.WallsApp.23" parent="Theme.WallsApp.21">
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:statusBarColor">@color/dark</item>
     </style>
 
-    <style name="Theme.NewsApp" parent="Theme.NewsApp.23"/>
+    <style name="Theme.WallsApp" parent="Theme.WallsApp.23"/>
 </resources>

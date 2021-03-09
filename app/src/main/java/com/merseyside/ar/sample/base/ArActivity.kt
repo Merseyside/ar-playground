@@ -14,11 +14,11 @@ import com.merseyside.ar.R
 import com.merseyside.ar.helpers.DisplayRotationHelper
 import com.merseyside.ar.helpers.TrackingStateHelper
 import com.merseyside.ar.rendering.BackgroundRenderer
+import com.merseyside.ar.rendering.ObjectRenderer
 import com.merseyside.ar.rendering.PlaneAttachment
 import com.merseyside.ar.rendering.PlaneRenderer
 import com.merseyside.ar.sample.utils.CameraPermissionHelper
 import com.merseyside.archy.presentation.activity.BaseBindingActivity
-import com.merseyside.utils.Logger.log
 import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.logMsg
 import java.io.IOException
@@ -129,6 +129,7 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     private fun setupTapDetector() {
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapUp(e: MotionEvent): Boolean {
+                e.x.log()
                 onSingleTap(e)
                 return true
             }
@@ -151,7 +152,11 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, results)
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
-            Toast.makeText(this, "Camera permission is needed to run this application", Toast.LENGTH_LONG)
+            Toast.makeText(
+                this,
+                "Camera permission is needed to run this application",
+                Toast.LENGTH_LONG
+            )
                 .show()
             if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
                 // Permission denied with checking "Do not ask again".
@@ -166,16 +171,18 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f)
 
 
-        // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
-        try {
-            // Create the texture and pass it to ARCore session to be filled during update().
-            backgroundRenderer.createOnGlThread(this)
-            planeRenderer.createOnGlThread(this, getString(R.string.model_grid_png))
+        session?.let {
+            // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
+            try {
+                // Create the texture and pass it to ARCore session to be filled during update().
+                backgroundRenderer.createOnGlThread(this)
+                planeRenderer.createOnGlThread(this, getString(R.string.model_grid_png))
 
-            onSurfaceCreated()
+                onSurfaceCreated(session!!)
 
-        } catch (e: IOException) {
-            Log.e(TAG, getString(R.string.failed_to_read_asset), e)
+            } catch (e: IOException) {
+                Log.e(TAG, getString(R.string.failed_to_read_asset), e)
+            }
         }
     }
 
@@ -218,8 +225,16 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
 
         if (tap != null && camera.trackingState == TrackingState.TRACKING) {
             // Check if any plane was hit, and if it was hit inside the plane polygon
-                onTap(camera, frame, frame.hitTest(tap))
+            onTap(camera, frame, frame.hitTest(tap))
         }
+    }
+
+    protected fun isValidPlane(camera: Camera, hit: HitResult): Boolean {
+        val trackable = hit.trackable
+
+        return trackable is Plane
+                && trackable.isPoseInPolygon(hit.hitPose)
+                && PlaneRenderer.calculateDistanceToPlane(hit.hitPose, camera.pose) > 0
     }
 
     fun computeProjectionMatrix(camera: Camera): FloatArray {
@@ -260,20 +275,39 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
     fun addSessionAnchorFromAttachment(
         previousAttachment: PlaneAttachment?,
         hit: HitResult
-    ): PlaneAttachment? {
+    ): PlaneAttachment {
         // 1
         previousAttachment?.anchor?.detach()
 
         // 2
         val plane = hit.trackable as Plane
-        val anchor = session!!.createAnchor(hit.hitPose)
+        val pose = hit.hitPose
+        val anchor = session!!.createAnchor(pose)
 
         // 3
         return PlaneAttachment(plane, anchor)
     }
 
+    fun drawObject(
+        objectRenderer: ObjectRenderer,
+        planeAttachment: PlaneAttachment?,
+        scaleFactor: Float,
+        projectionMatrix: FloatArray,
+        viewMatrix: FloatArray,
+        lightIntensity: FloatArray
+    ) {
+        if (planeAttachment?.isTracking == true) {
+            planeAttachment.pose.toMatrix(anchorMatrix, 0)
+
+            // Update and draw the model
+            objectRenderer.updateModelMatrix(anchorMatrix, scaleFactor)
+            objectRenderer.draw(viewMatrix, projectionMatrix, lightIntensity)
+        }
+    }
+
+
     abstract fun getSurfaceViewId(): Int
-    abstract fun onSurfaceCreated()
+    abstract fun onSurfaceCreated(session: Session)
     abstract fun onDrawFrame(camera: Camera, frame: Frame)
     abstract fun onTap(camera: Camera, frame: Frame, hitResults: List<HitResult>)
 

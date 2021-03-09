@@ -105,6 +105,7 @@ val modulez = listOf(
 
 val merseyModules = listOf(
     BuildModules.Libraries.MerseyLibs.archy,
+    BuildModules.Libraries.MerseyLibs.animators,
     BuildModules.Libraries.MerseyLibs.utils
 )
 

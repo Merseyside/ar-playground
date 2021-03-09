@@ -1,7 +1,7 @@
 <resources>
 
     <!-- Dark application theme. -->
-    <style name="Theme.NewsApp.Base" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Theme.WallsApp.Base" parent="Theme.MaterialComponents.NoActionBar">
 
         <item name="colorAccent">@color/blue_primary</item>
 

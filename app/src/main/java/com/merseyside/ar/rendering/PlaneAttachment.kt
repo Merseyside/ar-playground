@@ -49,6 +49,7 @@ import com.google.ar.core.Anchor
 import com.google.ar.core.Plane
 import com.google.ar.core.Pose
 import com.google.ar.core.TrackingState
+import com.merseyside.utils.ext.log
 
 class PlaneAttachment(var plane: Plane, var anchor: Anchor) {
 
@@ -61,7 +62,12 @@ class PlaneAttachment(var plane: Plane, var anchor: Anchor) {
       val pose = anchor.pose
       pose.getTranslation(poseTranslation, 0)
       pose.getRotationQuaternion(poseRotation, 0)
-      poseTranslation[1] = plane.centerPose.ty()
+
+      //poseRotation[0] = 0.5F
+      //poseRotation[1] = 0.5F
+      poseRotation[2].log()
+      poseRotation[2] = 1 + poseRotation[2]
+      //poseTranslation[2] = plane.centerPose.tz()
       return Pose(
           poseTranslation,
           poseRotation
