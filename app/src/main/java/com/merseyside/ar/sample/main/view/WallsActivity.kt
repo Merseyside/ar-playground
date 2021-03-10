@@ -13,6 +13,7 @@ import com.merseyside.animators.BaseAnimator
 import com.merseyside.animators.animator.AlphaAnimator
 import com.merseyside.ar.R
 import com.merseyside.ar.databinding.ActivityWallsBinding
+import com.merseyside.ar.rendering.LineRenderer
 import com.merseyside.ar.rendering.ObjectRenderer
 import com.merseyside.ar.rendering.PlaneAttachment
 import com.merseyside.ar.rendering.PlaneRenderer
@@ -51,6 +52,7 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
     private var animator: BaseAnimator? = null
 
     private val pointerObject = ObjectRenderer()
+    private val lineRenderer = LineRenderer()
 
     private var pointerAttachment: PlaneAttachment? = null
 
@@ -199,7 +201,7 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
 
     override fun onSurfaceCreated(session: Session) {
         val config = session.config
-        config.planeFindingMode = Config.PlaneFindingMode.VERTICAL
+        config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
         session.configure(config)
 
         pointerObject.createOnGlThread(
@@ -207,6 +209,8 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
                 R.string.model_target_png
             )
         )
+
+        //lineRenderer.createOnGlThread(this)
 
         pointerObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
     }
@@ -234,11 +238,29 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         if (isAddingPoint && pointerAttachment != null) {
             isAddingPoint = false
             pointAttachments.add(pointerAttachment!!)
+
+            // Add vertex to lineRenderer
+            val pose = pointerAttachment!!.anchor.pose
+
+            val modelMatrix = FloatArray(16)
+            pose.toMatrix(modelMatrix, 0)
+            lineRenderer.addVertex(
+                this.resources.displayMetrics.widthPixels,
+                this.resources.displayMetrics.heightPixels,
+                modelMatrix, viewMatrix, projectionMatrix
+            )
+
             pointerAttachment = null
         }
-//        if (pose == null && timer.isEmpty()) {
-//            pose = camera.pose
-//        }
+
+        //drawLines(projectionMatrix, viewMatrix)
+    }
+
+    private fun drawLines(
+        projectionMatrix: FloatArray,
+        cameraMatrix: FloatArray
+    ) {
+        lineRenderer.draw(projectionMatrix, cameraMatrix)
     }
 
     private fun drawCenterPointer(
