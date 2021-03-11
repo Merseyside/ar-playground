@@ -21,6 +21,7 @@ import com.merseyside.ar.sample.base.ArActivity
 import com.merseyside.archy.presentation.view.INVISIBLE
 import com.merseyside.archy.presentation.view.VISIBLE
 import com.merseyside.utils.ext.delay
+import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.onClick
 import com.merseyside.utils.mainThread
 import com.merseyside.utils.time.Millis
@@ -210,7 +211,7 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
             )
         )
 
-        //lineRenderer.createOnGlThread(this)
+        lineRenderer.createOnGlThread(this)
 
         pointerObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
     }
@@ -238,10 +239,10 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         if (isAddingPoint && pointerAttachment != null) {
             isAddingPoint = false
             pointAttachments.add(pointerAttachment!!)
-
-            // Add vertex to lineRenderer
+//
+//            // Add vertex to lineRenderer
             val pose = pointerAttachment!!.anchor.pose
-
+//
             val modelMatrix = FloatArray(16)
             pose.toMatrix(modelMatrix, 0)
             lineRenderer.addVertex(

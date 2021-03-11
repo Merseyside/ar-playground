@@ -4,6 +4,8 @@ import android.content.Context
 import android.opengl.GLES20
 import android.opengl.Matrix
 import com.merseyside.ar.helpers.WorldToScreenHelper
+import com.merseyside.utils.ext.log
+import com.merseyside.utils.ext.logMsg
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -47,7 +49,6 @@ class LineRenderer {
 
         linePositionParam = GLES20.glGetAttribLocation(lineProgram, "a_Position")
         lineColorParam = GLES20.glGetAttribLocation(lineProgram, "u_Color")
-        lineMatrixParam = GLES20.glGetAttribLocation(lineProgram, "u_Matrix")
 
         ShaderUtil.checkGLError(TAG, "Program parameters")
 
@@ -109,22 +110,26 @@ class LineRenderer {
 
     class Vertex(
         val x: Float,
-        val y: Float,
-        val z: Float
-    )
+        val y: Float
+    ) {
+        override fun toString(): String {
+            return "$x $y"
+        }
+    }
 
     fun List<Vertex>.toFloatArray(): FloatArray {
         return this@toFloatArray.flatMap {
             ArrayList<Float>().apply {
                 add(it.x)
                 add(it.y)
-                add(it.z)
             }
         }.toFloatArray()
     }
 
     fun DoubleArray.toVertex(): Vertex {
-        return Vertex(get(0).toFloat(), get(1).toFloat(), get(2).toFloat())
+        return Vertex(get(0).toFloat(), get(1).toFloat()).also {
+            logMsg("${it.x}")
+        }
     }
 
     companion object {
