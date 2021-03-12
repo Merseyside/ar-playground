@@ -57,35 +57,35 @@ class PlaneAttachment(var plane: Plane, var anchor: Anchor) {
     get() = (plane.trackingState == TrackingState.TRACKING
         && anchor.trackingState == TrackingState.TRACKING)
 
-//  val pose: Pose
-//    get() {
-//      val pose = anchor.pose
-//      pose.getTranslation(poseTranslation, 0)
-//      pose.getRotationQuaternion(poseRotation, 0)
-//
-//      //poseRotation[0] = 0.5F
-//      //poseRotation[1] = 0.5F
-//      poseRotation[2].log()
-//      poseRotation[2] = 1 + poseRotation[2]
-//      //poseTranslation[2] = plane.centerPose.tz()
-//      return Pose(
-//          poseTranslation,
-//          poseRotation
-//      )
-//    }
-
-
   val pose: Pose
     get() {
       val pose = anchor.pose
       pose.getTranslation(poseTranslation, 0)
       pose.getRotationQuaternion(poseRotation, 0)
-      poseTranslation[1] = plane.centerPose.ty()
+
+      //poseRotation[0] = 0.5F
+      //poseRotation[1] = 0.5F
+      poseRotation[2].log()
+      poseRotation[2] = 1 + poseRotation[2]
+      //poseTranslation[2] = plane.centerPose.tz()
       return Pose(
-        poseTranslation,
-        poseRotation
+          poseTranslation,
+          poseRotation
       )
     }
+
+
+//  val pose: Pose
+//    get() {
+//      val pose = anchor.pose
+//      pose.getTranslation(poseTranslation, 0)
+//      pose.getRotationQuaternion(poseRotation, 0)
+//      poseTranslation[1] = plane.centerPose.ty()
+//      return Pose(
+//        poseTranslation,
+//        poseRotation
+//      )
+//    }
 
   companion object {
     private val poseTranslation = FloatArray(3)

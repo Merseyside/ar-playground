@@ -3,28 +3,31 @@ package com.merseyside.ar.rendering
 import android.content.Context
 import android.opengl.GLES20
 import android.opengl.Matrix
-import com.merseyside.ar.helpers.WorldToScreenHelper
-import com.merseyside.utils.ext.log
+import com.google.ar.core.Anchor
+import com.google.ar.core.Pose
 import com.merseyside.utils.ext.logMsg
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.*
 
-
 class LineRenderer {
-
-    private var vertices: MutableList<Vertex> = LinkedList()
-    private lateinit var vertexData: FloatBuffer
-
-    private var lineProgram = 0
-    private var linePositionParam = 0
-    private var lineColorParam = 0
-    private var lineMatrixParam = 0
-
+    private val vertices: MutableList<Vertex> = LinkedList()
     private var isDataChanged = false
 
-    private val matrix = FloatArray(16)
+    private var lineProgram: Int = 0
+
+    private var mMVPMatrixHandle = 0
+
+    private lateinit var vertexBuffer: FloatBuffer
+    var color = floatArrayOf(0.63671875f, 0.76953125f, 0.22265625f, 1.0f)
+    private var mPositionHandle = 0
+    private var mColorHandle = 0
+    private val vertexStride = FLOATS_PER_VERTEX * 4
+
+    private val mModelMatrix = FloatArray(16)
+    private val mModelViewMatrix = FloatArray(16)
+    private val mModelViewProjectionMatrix = FloatArray(16)
 
     fun createOnGlThread(context: Context) {
         val vertexShader = ShaderUtil.loadGLShader(
@@ -47,70 +50,105 @@ class LineRenderer {
         GLES20.glLinkProgram(lineProgram)
         GLES20.glUseProgram(lineProgram)
 
-        linePositionParam = GLES20.glGetAttribLocation(lineProgram, "a_Position")
-        lineColorParam = GLES20.glGetAttribLocation(lineProgram, "u_Color")
+        GLES20.glLineWidth(5F)
 
-        ShaderUtil.checkGLError(TAG, "Program parameters")
-
-        bindData()
+        Matrix.setIdentityM(mModelMatrix, 0)
     }
 
-    private fun bindData() {
-        lineColorParam = GLES20.glGetUniformLocation(lineProgram, "u_Color")
-        GLES20.glUniform4f(lineColorParam, 1.0F, 1.0F, 1.0F, 1.0F)
-        linePositionParam = GLES20.glGetUniformLocation(lineProgram, "a_Position")
-        vertexData.position(0)
-        GLES20.glVertexAttribPointer(linePositionParam, 3, GLES20.GL_FLOAT, false, 0, vertexData)
-        GLES20.glEnableVertexAttribArray(linePositionParam)
-    }
+    fun addVertex(anchor: Anchor) {
+        val _pose = getPose(anchor)
+        val translation = FloatArray(4)
+        _pose.getTranslation(translation, 0)
+        vertices.add(translation.toVertex())
 
-    private fun bindMatrix(perspectiveMatrix: FloatArray, viewMatrix: FloatArray) {
-        Matrix.multiplyMM(matrix, 0, perspectiveMatrix, 0, viewMatrix, 0)
-        GLES20.glUniformMatrix4fv(lineMatrixParam, 1, false, matrix, 0)
-    }
-
-    fun addVertex(
-        screenWidth: Int,
-        screenHeight: Int,
-        modelMatrix: FloatArray,
-        cameraMatrix: FloatArray,
-        projectionMatrix: FloatArray
-    ) {
-        val world2screenMatrix: FloatArray =
-            WorldToScreenHelper.calculateWorld2CameraMatrix(modelMatrix, cameraMatrix, projectionMatrix)
-        val anchor_2d: DoubleArray = WorldToScreenHelper.world2Screen(screenWidth, screenHeight, world2screenMatrix)
-
-        vertices.add(anchor_2d.toVertex())
         isDataChanged = true
     }
 
-    fun prepareData() {
+    fun prepareVertices() {
+
         val verticesFloats = vertices.toFloatArray()
 
-        vertexData = ByteBuffer
-            .allocateDirect(verticesFloats.size * Float.SIZE_BITS)
+        vertexBuffer = ByteBuffer
+            .allocateDirect(verticesFloats.size * Float.SIZE_BYTES)
             .order(ByteOrder.nativeOrder())
             .asFloatBuffer()
 
-        vertexData.put(verticesFloats)
+        vertexBuffer.put(verticesFloats)
+
+        vertexBuffer.position(0)
 
         isDataChanged = false
     }
 
-    fun draw(
-        cameraView: FloatArray,
-        cameraPerspective: FloatArray,
-    ) {
-        if (vertices.size > 1 && isDataChanged) prepareData()
+    fun setColor(red: Float, green: Float, blue: Float, alpha: Float) {
+        color[0] = red
+        color[1] = green
+        color[2] = blue
+        color[3] = alpha
+    }
 
-        bindMatrix(cameraPerspective, cameraView)
+    fun draw(cameraView: FloatArray?, cameraPerspective: FloatArray?) {
+        ShaderUtil.checkGLError(TAG, "Before draw")
 
-        GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, vertices.size)
+        if (vertices.size > 1) {
+
+            if (isDataChanged) prepareVertices()
+
+            Matrix.multiplyMM(mModelViewMatrix, 0, cameraView, 0, mModelMatrix, 0)
+            Matrix.multiplyMM(
+                mModelViewProjectionMatrix,
+                0,
+                cameraPerspective,
+                0,
+                mModelViewMatrix,
+                0
+            )
+
+            GLES20.glUseProgram(lineProgram)
+            ShaderUtil.checkGLError(TAG, "After glBindBuffer")
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+            ShaderUtil.checkGLError(TAG, "After glBindBuffer")
+
+            mPositionHandle = GLES20.glGetAttribLocation(lineProgram, "a_Position")
+            ShaderUtil.checkGLError(TAG, "After glGetAttribLocation")
+
+            GLES20.glEnableVertexAttribArray(mPositionHandle)
+            ShaderUtil.checkGLError(TAG, "After glEnableVertexAttribArray")
+
+            GLES20.glVertexAttribPointer(
+                mPositionHandle, FLOATS_PER_VERTEX,
+                GLES20.GL_FLOAT, false,
+                vertexStride, vertexBuffer
+            )
+            ShaderUtil.checkGLError(TAG, "After glVertexAttribPointer")
+
+            mColorHandle = GLES20.glGetUniformLocation(lineProgram, "u_Color")
+
+            GLES20.glUniform4fv(mColorHandle, 1, color, 0)
+            ShaderUtil.checkGLError(TAG, "After glUniform4fv")
+
+            mMVPMatrixHandle = GLES20.glGetUniformLocation(lineProgram, "u_ModelViewProjection")
+
+            GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mModelViewProjectionMatrix, 0)
+            ShaderUtil.checkGLError(TAG, "After glUniformMatrix4fv")
+
+            GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, vertices.size)
+            ShaderUtil.checkGLError(TAG, "After glDrawArrays")
+
+            GLES20.glDisableVertexAttribArray(mPositionHandle)
+            ShaderUtil.checkGLError(TAG, "After draw")
+        }
+    }
+
+    fun reset() {
+        vertices.clear()
+        vertexBuffer.clear()
     }
 
     class Vertex(
         val x: Float,
-        val y: Float
+        val y: Float,
+        val z: Float,
     ) {
         override fun toString(): String {
             return "$x $y"
@@ -122,20 +160,35 @@ class LineRenderer {
             ArrayList<Float>().apply {
                 add(it.x)
                 add(it.y)
+                add(it.z)
             }
         }.toFloatArray()
     }
 
-    fun DoubleArray.toVertex(): Vertex {
-        return Vertex(get(0).toFloat(), get(1).toFloat()).also {
-            logMsg("${it.x}")
+    fun FloatArray.toVertex(): Vertex {
+        return Vertex(get(0), get(1), get(2)).also {
+            logMsg("toVertex ${it.x} ${it.y} ${it.z}")
         }
+    }
+
+    private val mPoseTranslation = FloatArray(3)
+    private val mPoseRotation = FloatArray(4)
+
+    private fun getPose(anchor: Anchor): Pose {
+        val pose = anchor.pose
+        pose.getTranslation(mPoseTranslation, 0)
+        pose.getRotationQuaternion(mPoseRotation, 0)
+        return Pose(mPoseTranslation, mPoseRotation)
     }
 
     companion object {
         private const val TAG = "LineRenderer"
-        
-        private const val VERTEX_SHADER_NAME = "line.vert"
-        private const val FRAGMENT_SHADER_NAME = "line.frag"
+
+        private const val FLOATS_PER_VERTEX = 3
+        private const val BYTES_PER_FLOAT = Float.SIZE_BYTES
+        private const val BYTES_PER_POINT = BYTES_PER_FLOAT * FLOATS_PER_VERTEX
+
+        private const val VERTEX_SHADER_NAME = "shaders/line.vert"
+        private const val FRAGMENT_SHADER_NAME = "shaders/line.frag"
     }
 }

@@ -13,15 +13,11 @@ import com.merseyside.animators.BaseAnimator
 import com.merseyside.animators.animator.AlphaAnimator
 import com.merseyside.ar.R
 import com.merseyside.ar.databinding.ActivityWallsBinding
-import com.merseyside.ar.rendering.LineRenderer
-import com.merseyside.ar.rendering.ObjectRenderer
-import com.merseyside.ar.rendering.PlaneAttachment
-import com.merseyside.ar.rendering.PlaneRenderer
+import com.merseyside.ar.rendering.*
 import com.merseyside.ar.sample.base.ArActivity
 import com.merseyside.archy.presentation.view.INVISIBLE
 import com.merseyside.archy.presentation.view.VISIBLE
 import com.merseyside.utils.ext.delay
-import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.onClick
 import com.merseyside.utils.mainThread
 import com.merseyside.utils.time.Millis
@@ -198,11 +194,14 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
     private fun reset() {
         timer = Seconds(TIMER_VALUE_SECONDS)
         getBinding().reset.visibility = INVISIBLE
+        lineRenderer.reset()
+        pointAttachments.forEach { it.anchor.detach() }
+        pointAttachments.clear()
     }
 
     override fun onSurfaceCreated(session: Session) {
         val config = session.config
-        config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
+        config.planeFindingMode = Config.PlaneFindingMode.VERTICAL
         session.configure(config)
 
         pointerObject.createOnGlThread(
@@ -239,29 +238,21 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         if (isAddingPoint && pointerAttachment != null) {
             isAddingPoint = false
             pointAttachments.add(pointerAttachment!!)
-//
-//            // Add vertex to lineRenderer
-            val pose = pointerAttachment!!.anchor.pose
-//
-            val modelMatrix = FloatArray(16)
-            pose.toMatrix(modelMatrix, 0)
-            lineRenderer.addVertex(
-                this.resources.displayMetrics.widthPixels,
-                this.resources.displayMetrics.heightPixels,
-                modelMatrix, viewMatrix, projectionMatrix
-            )
+
+            // Add vertex to lineRenderer
+            lineRenderer.addVertex(pointerAttachment!!.anchor)
 
             pointerAttachment = null
         }
 
-        //drawLines(projectionMatrix, viewMatrix)
+        drawLines(projectionMatrix, viewMatrix)
     }
 
     private fun drawLines(
         projectionMatrix: FloatArray,
         cameraMatrix: FloatArray
     ) {
-        lineRenderer.draw(projectionMatrix, cameraMatrix)
+        lineRenderer.draw(cameraMatrix, projectionMatrix)
     }
 
     private fun drawCenterPointer(
@@ -271,7 +262,6 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         viewMatrix: FloatArray,
         lightIntensity: FloatArray
     ): Boolean {
-        pointerAttachment?.anchor?.detach()
         val hitResults = frame.hitTest(centerX, centerY)
 
         val plane = hitResults.find { isValidPlane(camera, it) }

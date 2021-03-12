@@ -1,6 +1,6 @@
-attribute vec3 a_Position;
-
+attribute vec4 a_Position;
+uniform mat4 u_ModelViewProjection;
 
 void main() {
-    gl_Position = a_Position;
+    gl_Position = u_ModelViewProjection * a_Position;
 }
