@@ -4,7 +4,7 @@ import android.content.Context
 import android.opengl.GLES20
 import android.opengl.Matrix
 import com.google.ar.core.Anchor
-import com.google.ar.core.Pose
+import com.merseyside.ar.helpers.ArHelper
 import com.merseyside.utils.ext.logMsg
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -19,7 +19,7 @@ class LineRenderer {
 
     private var mMVPMatrixHandle = 0
 
-    private lateinit var vertexBuffer: FloatBuffer
+    private var vertexBuffer: FloatBuffer? = null
     var color = floatArrayOf(0.63671875f, 0.76953125f, 0.22265625f, 1.0f)
     private var mPositionHandle = 0
     private var mColorHandle = 0
@@ -28,6 +28,8 @@ class LineRenderer {
     private val mModelMatrix = FloatArray(16)
     private val mModelViewMatrix = FloatArray(16)
     private val mModelViewProjectionMatrix = FloatArray(16)
+
+    var mode = Mode.STROKE
 
     fun createOnGlThread(context: Context) {
         val vertexShader = ShaderUtil.loadGLShader(
@@ -56,7 +58,7 @@ class LineRenderer {
     }
 
     fun addVertex(anchor: Anchor) {
-        val _pose = getPose(anchor)
+        val _pose = ArHelper.getPose(anchor)
         val translation = FloatArray(4)
         _pose.getTranslation(translation, 0)
         vertices.add(translation.toVertex())
@@ -73,9 +75,9 @@ class LineRenderer {
             .order(ByteOrder.nativeOrder())
             .asFloatBuffer()
 
-        vertexBuffer.put(verticesFloats)
+        vertexBuffer?.put(verticesFloats)
 
-        vertexBuffer.position(0)
+        vertexBuffer?.position(0)
 
         isDataChanged = false
     }
@@ -132,7 +134,11 @@ class LineRenderer {
             GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mModelViewProjectionMatrix, 0)
             ShaderUtil.checkGLError(TAG, "After glUniformMatrix4fv")
 
-            GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, vertices.size)
+            val primitive =
+                if (mode == Mode.STROKE) GLES20.GL_LINE_LOOP
+                else GLES20.GL_TRIANGLE_FAN
+
+            GLES20.glDrawArrays(primitive, 0, vertices.size)
             ShaderUtil.checkGLError(TAG, "After glDrawArrays")
 
             GLES20.glDisableVertexAttribArray(mPositionHandle)
@@ -142,7 +148,8 @@ class LineRenderer {
 
     fun reset() {
         vertices.clear()
-        vertexBuffer.clear()
+        vertexBuffer?.clear()
+        mode = Mode.STROKE
     }
 
     class Vertex(
@@ -171,15 +178,8 @@ class LineRenderer {
         }
     }
 
-    private val mPoseTranslation = FloatArray(3)
-    private val mPoseRotation = FloatArray(4)
+    enum class Mode { SOLID, STROKE }
 
-    private fun getPose(anchor: Anchor): Pose {
-        val pose = anchor.pose
-        pose.getTranslation(mPoseTranslation, 0)
-        pose.getRotationQuaternion(mPoseRotation, 0)
-        return Pose(mPoseTranslation, mPoseRotation)
-    }
 
     companion object {
         private const val TAG = "LineRenderer"
