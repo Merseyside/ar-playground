@@ -53,30 +53,26 @@ import com.merseyside.utils.ext.log
 
 class PlaneAttachment(var plane: Plane, var anchor: Anchor) {
 
-  val isTracking: Boolean
-    get() = (plane.trackingState == TrackingState.TRACKING
-        && anchor.trackingState == TrackingState.TRACKING)
+    val isTracking: Boolean
+        get() = (plane.trackingState == TrackingState.TRACKING
+                && anchor.trackingState == TrackingState.TRACKING)
 
-  val pose: Pose
-    get() {
-      val pose = anchor.pose
-      pose.getTranslation(poseTranslation, 0)
-      pose.getRotationQuaternion(poseRotation, 0)
+    val pose: Pose
+        get() {
+            val pose = anchor.pose
+            pose.getTranslation(poseTranslation, 0)
+            pose.getRotationQuaternion(poseRotation, 0)
 
-      //poseRotation[0] = 0.5F
-      //poseRotation[1] = 0.5F
-      poseRotation[2].log()
-      poseRotation[2] = 1 + poseRotation[2]
-      //poseTranslation[2] = plane.centerPose.tz()
-      return Pose(
-          poseTranslation,
-          poseRotation
-      )
+            poseRotation[2] = 5f
+            return Pose(
+                poseTranslation,
+                poseRotation
+            )
+        }
+
+    companion object {
+        private val poseTranslation = FloatArray(3)
+        private val poseRotation = FloatArray(4)
     }
-
-  companion object {
-    private val poseTranslation = FloatArray(3)
-    private val poseRotation = FloatArray(4)
-  }
 
 }

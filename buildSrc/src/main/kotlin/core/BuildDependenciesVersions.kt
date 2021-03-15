@@ -22,7 +22,6 @@ object BuildDependenciesVersions {
     const val LOGGING = "4.2.2"
     const val DAGGER = "2.29.1"
     const val RETROFIT = "2.9.0"
-    const val PLAY_CORE = "1.8.3"
     const val AUTO_SERVICE = "1.0-rc4"
     const val COIL = "1.1.0"
     const val RETROFIT_SERIALIZATION = "0.5.0"
@@ -31,5 +30,5 @@ object BuildDependenciesVersions {
     const val AR_CORE = "1.23.0"
     const val OBJ_LOADER = "0.3.0"
 
-    const val MERSEY_LIBS = "1.3.2"
+    const val MERSEY_LIBS = "1.3.3"
 }

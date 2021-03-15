@@ -29,16 +29,16 @@
             android:progressDrawable="@drawable/progress_shape"
             android:visibility="invisible"/>
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/reset"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text="@string/reset"
+            android:background="@drawable/reset_button_background"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:text="@string/reset"
-            android:textAppearance="@style/WallsApp.Headline6"
-            android:visibility="invisible"/>
+            android:layout_marginBottom="@dimen/medium_spacing"
+            android:layout_marginStart="@dimen/medium_spacing"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/putPoint"
@@ -50,6 +50,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginBottom="@dimen/medium_spacing"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/fillPolygon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:text="@string/go"
+            android:background="@drawable/put_button_background"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginBottom="@dimen/medium_spacing"
+            android:layout_marginEnd="@dimen/medium_spacing"
+            android:visibility="invisible"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

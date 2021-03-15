@@ -1,35 +1,25 @@
 package com.merseyside.ar.sample.main.view
 
 import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
-import android.util.Range
-import android.view.View
-import androidx.lifecycle.lifecycleScope
+import android.widget.Toast
 import com.google.ar.core.*
-import com.merseyside.animators.BaseAnimator
-import com.merseyside.animators.animator.AlphaAnimator
 import com.merseyside.ar.R
 import com.merseyside.ar.databinding.ActivityWallsBinding
+import com.merseyside.ar.helpers.ArHelper
+import com.merseyside.ar.rendering.LineRenderer
 import com.merseyside.ar.rendering.ObjectRenderer
 import com.merseyside.ar.rendering.PlaneAttachment
-import com.merseyside.ar.rendering.PlaneRenderer
+import com.merseyside.ar.rendering.SquareUtil
 import com.merseyside.ar.sample.base.ArActivity
 import com.merseyside.archy.presentation.view.INVISIBLE
 import com.merseyside.archy.presentation.view.VISIBLE
-import com.merseyside.utils.ext.delay
 import com.merseyside.utils.ext.onClick
 import com.merseyside.utils.mainThread
-import com.merseyside.utils.time.Millis
 import com.merseyside.utils.time.Seconds
 import com.merseyside.utils.time.TimeUnit
-import com.merseyside.utils.time.minus
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 
 
 class WallsActivity : ArActivity<ActivityWallsBinding>() {
@@ -48,9 +38,13 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
     private var centerX = 0F
     private var centerY = 0F
 
-    private var animator: BaseAnimator? = null
+    private var isShowingPlanes = true
+    private var isShowingPoints = true
+
+//    private var animator: BaseAnimator? = null
 
     private val pointerObject = ObjectRenderer()
+    private val lineRenderer = LineRenderer()
 
     private var pointerAttachment: PlaneAttachment? = null
 
@@ -63,10 +57,6 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         centerX = (this.resources.displayMetrics.widthPixels / 2).toFloat()
         centerY = (this.resources.displayMetrics.heightPixels / 2).toFloat()
 
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        magneticSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
-
         getBinding().reset.onClick {
             reset()
         }
@@ -74,110 +64,35 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         getBinding().putPoint.onClick {
             isAddingPoint = true
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
+        getBinding().fillPolygon.onClick {
+            lineRenderer.mode = LineRenderer.Mode.SOLID
+            findAreaSquare()
 
-        sensorManager.registerListener(
-            listener,
-            accelSensor,
-            SensorManager.SENSOR_DELAY_UI
-        )
-        sensorManager.registerListener(
-            listener,
-            magneticSensor,
-            SensorManager.SENSOR_DELAY_UI
-        )
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        sensorManager.unregisterListener(listener)
-    }
-
-    // Gravity rotational data
-    private var gravity: FloatArray? = null
-
-    // Magnetic rotational data
-    private var magnetic: FloatArray? = null //for magnetic rotational data
-
-    private var accels = FloatArray(3)
-    private var mags = FloatArray(3)
-    private val values = FloatArray(3)
-
-    // azimuth, pitch and roll
-    private var pitch = 0f
-
-    private val listener: SensorEventListener = object : SensorEventListener {
-        override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
-        override fun onSensorChanged(event: SensorEvent) {
-            when (event.sensor.type) {
-                Sensor.TYPE_MAGNETIC_FIELD -> mags = event.values.clone()
-                Sensor.TYPE_ACCELEROMETER -> accels = event.values.clone()
-            }
-
-            gravity = FloatArray(9)
-            magnetic = FloatArray(9)
-            SensorManager.getRotationMatrix(gravity, magnetic, accels, mags)
-            val outGravity = FloatArray(9)
-            SensorManager.remapCoordinateSystem(
-                gravity,
-                SensorManager.AXIS_X,
-                SensorManager.AXIS_Z,
-                outGravity
-            )
-            SensorManager.getOrientation(outGravity, values)
-
-            pitch = values[1] * 57.2957795f
-
-            if (timer.isNotEmpty()) {
-                if (timerJob == null) {
-                    if (pitch in ANGLE_RANGE) {
-                        timerJob = launchTimer()
-                        startAnimation()
-                    }
-                } else if (pitch !in ANGLE_RANGE) {
-                    stopTimer()
-                    reverseAnimation()
-                }
-            }
+            isShowingPlanes = false
+            isShowingPoints = false
         }
     }
 
-    private fun startAnimation() {
-        if (animator == null) {
-            animator = AlphaAnimator(AlphaAnimator.Builder(
-                view = getBinding().progressBar,
-                duration = Millis(500)
-            ).apply {
-                values(0F, 1F)
-            })
+    private fun findAreaSquare() {
+        var total = 0.0
+
+        val size: Int = pointAttachments.size
+        val arrayOfVertex = Array(size + 1) { FloatArray(2) }
+        var pose0 = ArHelper.getPose(pointAttachments.first().anchor)
+        arrayOfVertex[0][0] = pose0.tx()
+        arrayOfVertex[0][1] = pose0.ty()
+        for (i in 1 until pointAttachments.size) {
+            val pose1 = ArHelper.getPose(pointAttachments[i].anchor)
+            val distance = (ArHelper.getDistance(pose0, pose1) * 1000)/10.0f
+            total += distance
+
+            arrayOfVertex[i][0] = pose1.tx()
+            arrayOfVertex[i][1] = pose1.ty()
+            pose0 = pose1
         }
 
-        animator!!.start()
-    }
-
-    private fun reverseAnimation() {
-        animator?.reverse()
-    }
-
-    private fun launchTimer(): Job {
-        return lifecycleScope.launch {
-            while (isActive) {
-                updateProgress()
-                delay(TIMER_STEP)
-
-                timer -= TIMER_STEP
-
-                if (timer.isEmpty()) {
-                    cancel()
-                    reverseAnimation()
-                    getBinding().reset.visibility = View.VISIBLE
-                }
-            }
-        }
+        Toast.makeText(this, "Distance: $total cm ${(SquareUtil.gaussFormulaToFindArea(arrayOfVertex))}", Toast.LENGTH_LONG).show()
     }
 
     private fun stopTimer() {
@@ -194,7 +109,12 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
 
     private fun reset() {
         timer = Seconds(TIMER_VALUE_SECONDS)
-        getBinding().reset.visibility = INVISIBLE
+        lineRenderer.reset()
+        pointAttachments.forEach { it.anchor.detach() }
+        pointAttachments.clear()
+
+        isShowingPlanes = true
+        isShowingPoints = true
     }
 
     override fun onSurfaceCreated(session: Session) {
@@ -208,6 +128,8 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
             )
         )
 
+        lineRenderer.createOnGlThread(this)
+
         pointerObject.setMaterialProperties(0.0f, 3.5f, 1.0f, 6.0f)
     }
 
@@ -216,9 +138,8 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         val viewMatrix = computeViewMatrix(camera)
         val lightIntensity = computeLightIntensity(frame)
 
-        visualizePlanes(camera, projectionMatrix)
-
-        drawPoints(projectionMatrix, viewMatrix, lightIntensity)
+        if (isShowingPlanes) visualizePlanes(camera, projectionMatrix)
+        if (isShowingPoints) drawPoints(projectionMatrix, viewMatrix, lightIntensity)
 
         val isSuccess =
             drawCenterPointer(camera, frame, projectionMatrix, viewMatrix, lightIntensity)
@@ -229,16 +150,32 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
             } else {
                 INVISIBLE
             }
+
+            getBinding().fillPolygon.visibility = if (pointAttachments.size > 2) {
+                 VISIBLE
+            } else {
+                INVISIBLE
+            }
         }
 
         if (isAddingPoint && pointerAttachment != null) {
             isAddingPoint = false
             pointAttachments.add(pointerAttachment!!)
+
+            // Add vertex to lineRenderer
+            lineRenderer.addVertex(pointerAttachment!!.anchor)
+
             pointerAttachment = null
         }
-//        if (pose == null && timer.isEmpty()) {
-//            pose = camera.pose
-//        }
+
+        drawLines(projectionMatrix, viewMatrix)
+    }
+
+    private fun drawLines(
+        projectionMatrix: FloatArray,
+        cameraMatrix: FloatArray
+    ) {
+        lineRenderer.draw(cameraMatrix, projectionMatrix)
     }
 
     private fun drawCenterPointer(
@@ -248,7 +185,6 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
         viewMatrix: FloatArray,
         lightIntensity: FloatArray
     ): Boolean {
-        pointerAttachment?.anchor?.detach()
         val hitResults = frame.hitTest(centerX, centerY)
 
         val plane = hitResults.find { isValidPlane(camera, it) }
@@ -296,13 +232,8 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
 
 
     companion object {
-        private const val TAG = "WallsActivity"
-
         private const val TIMER_VALUE_SECONDS = 3
 
         private var timer: TimeUnit = Seconds(TIMER_VALUE_SECONDS)
-        private val TIMER_STEP = Millis(30)
-
-        private val ANGLE_RANGE = Range(80F, 100F)
     }
 }

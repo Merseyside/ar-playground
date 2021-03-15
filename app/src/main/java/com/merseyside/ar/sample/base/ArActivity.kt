@@ -203,12 +203,12 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
 
                 val frame = it.update()
                 val camera = frame.camera
-//
+
                 handleTap(frame, camera)
                 drawBackground(frame)
-//
+
                 trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
-//
+
                 onDrawFrame(camera, frame)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -239,7 +239,7 @@ abstract class ArActivity<B : ViewDataBinding> : BaseBindingActivity<B>(), GLSur
 
     fun computeProjectionMatrix(camera: Camera): FloatArray {
         val projectionMatrix = FloatArray(maxAllocationSize)
-        camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f)
+        camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 10.0f)
 
         return projectionMatrix
     }
