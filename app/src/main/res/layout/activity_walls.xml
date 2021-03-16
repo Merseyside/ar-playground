@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -10,58 +9,89 @@
             android:id="@+id/surfaceView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_gravity="top"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_gravity="top"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:progressBarStyleHorizontal"
-            android:progress="0"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:progress="0"
             android:progressDrawable="@drawable/progress_shape"
-            android:visibility="invisible"/>
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/reset"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:text="@string/reset"
-            android:background="@drawable/reset_button_background"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="@dimen/medium_spacing"
             android:layout_marginBottom="@dimen/medium_spacing"
-            android:layout_marginStart="@dimen/medium_spacing"/>
+            android:background="@drawable/reset_button_background"
+            android:text="@string/reset"
+            app:layout_constraintBottom_toTopOf="@id/settings"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/putPoint"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:text="@string/put"
+            android:layout_marginBottom="@dimen/medium_spacing"
             android:background="@drawable/put_button_background"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:text="@string/put"
+            app:layout_constraintBottom_toTopOf="@id/settings"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="@dimen/medium_spacing"/>
+            app:layout_constraintStart_toStartOf="parent" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/fillPolygon"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:text="@string/go"
-            android:background="@drawable/put_button_background"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginBottom="@dimen/medium_spacing"
             android:layout_marginEnd="@dimen/medium_spacing"
-            android:visibility="invisible"/>
+            android:layout_marginBottom="@dimen/medium_spacing"
+            android:background="@drawable/put_button_background"
+            android:text="@string/go"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toTopOf="@id/settings"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/settings"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <com.merseyside.ar.sample.view.paletteView.PaletteView
+                android:id="@+id/palette"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/small_spacing"
+                app:itemPadding="@dimen/very_small_spacing"
+                app:colorViewSize="32dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+
+            <com.google.android.material.slider.Slider
+                android:id="@+id/opacity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/opacity"
+                android:valueFrom="0"
+                android:valueTo="255"
+                android:value="255"/>
+
+
+        </LinearLayout>
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

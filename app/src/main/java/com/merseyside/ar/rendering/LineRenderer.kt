@@ -1,10 +1,13 @@
 package com.merseyside.ar.rendering
 
 import android.content.Context
-import android.opengl.GLES20
+import android.graphics.Color
+import android.opengl.GLES20.*
 import android.opengl.Matrix
+import androidx.annotation.ColorInt
 import com.google.ar.core.Anchor
 import com.merseyside.ar.helpers.ArHelper
+import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.logMsg
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -35,24 +38,24 @@ class LineRenderer {
         val vertexShader = ShaderUtil.loadGLShader(
             TAG,
             context,
-            GLES20.GL_VERTEX_SHADER,
+            GL_VERTEX_SHADER,
             VERTEX_SHADER_NAME
         )
 
         val fragmentShader = ShaderUtil.loadGLShader(
             TAG,
             context,
-            GLES20.GL_FRAGMENT_SHADER,
+            GL_FRAGMENT_SHADER,
             FRAGMENT_SHADER_NAME
         )
 
-        lineProgram = GLES20.glCreateProgram()
-        GLES20.glAttachShader(lineProgram, vertexShader)
-        GLES20.glAttachShader(lineProgram, fragmentShader)
-        GLES20.glLinkProgram(lineProgram)
-        GLES20.glUseProgram(lineProgram)
+        lineProgram = glCreateProgram()
+        glAttachShader(lineProgram, vertexShader)
+        glAttachShader(lineProgram, fragmentShader)
+        glLinkProgram(lineProgram)
+        glUseProgram(lineProgram)
 
-        GLES20.glLineWidth(5F)
+        glLineWidth(5F)
 
         Matrix.setIdentityM(mModelMatrix, 0)
     }
@@ -64,6 +67,15 @@ class LineRenderer {
         vertices.add(translation.toVertex())
 
         isDataChanged = true
+    }
+
+    fun setColor(@ColorInt color: Int, alpha: Int) {
+        this.color = floatArrayOf(
+            Color.red(color).toFloat() / 255,
+            Color.green(color).toFloat() / 255,
+            Color.blue(color).toFloat() / 255,
+            (alpha.toFloat() / 255).log()
+        )
     }
 
     fun prepareVertices() {
@@ -82,15 +94,11 @@ class LineRenderer {
         isDataChanged = false
     }
 
-    fun setColor(red: Float, green: Float, blue: Float, alpha: Float) {
-        color[0] = red
-        color[1] = green
-        color[2] = blue
-        color[3] = alpha
-    }
-
     fun draw(cameraView: FloatArray?, cameraPerspective: FloatArray?) {
         ShaderUtil.checkGLError(TAG, "Before draw")
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
 
         if (vertices.size > 1) {
 
@@ -106,42 +114,42 @@ class LineRenderer {
                 0
             )
 
-            GLES20.glUseProgram(lineProgram)
+            glUseProgram(lineProgram)
             ShaderUtil.checkGLError(TAG, "After glBindBuffer")
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0)
+            glBindBuffer(GL_ARRAY_BUFFER, 0)
             ShaderUtil.checkGLError(TAG, "After glBindBuffer")
 
-            mPositionHandle = GLES20.glGetAttribLocation(lineProgram, "a_Position")
+            mPositionHandle = glGetAttribLocation(lineProgram, "a_Position")
             ShaderUtil.checkGLError(TAG, "After glGetAttribLocation")
 
-            GLES20.glEnableVertexAttribArray(mPositionHandle)
+            glEnableVertexAttribArray(mPositionHandle)
             ShaderUtil.checkGLError(TAG, "After glEnableVertexAttribArray")
 
-            GLES20.glVertexAttribPointer(
+            glVertexAttribPointer(
                 mPositionHandle, FLOATS_PER_VERTEX,
-                GLES20.GL_FLOAT, false,
+                GL_FLOAT, false,
                 vertexStride, vertexBuffer
             )
             ShaderUtil.checkGLError(TAG, "After glVertexAttribPointer")
 
-            mColorHandle = GLES20.glGetUniformLocation(lineProgram, "u_Color")
+            mColorHandle = glGetUniformLocation(lineProgram, "u_Color")
 
-            GLES20.glUniform4fv(mColorHandle, 1, color, 0)
+            glUniform4fv(mColorHandle, 1, color, 0)
             ShaderUtil.checkGLError(TAG, "After glUniform4fv")
 
-            mMVPMatrixHandle = GLES20.glGetUniformLocation(lineProgram, "u_ModelViewProjection")
+            mMVPMatrixHandle = glGetUniformLocation(lineProgram, "u_ModelViewProjection")
 
-            GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mModelViewProjectionMatrix, 0)
+            glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mModelViewProjectionMatrix, 0)
             ShaderUtil.checkGLError(TAG, "After glUniformMatrix4fv")
 
             val primitive =
-                if (mode == Mode.STROKE) GLES20.GL_LINE_LOOP
-                else GLES20.GL_TRIANGLE_FAN
+                if (mode == Mode.STROKE) GL_LINE_LOOP
+                else GL_TRIANGLE_FAN
 
-            GLES20.glDrawArrays(primitive, 0, vertices.size)
+            glDrawArrays(primitive, 0, vertices.size)
             ShaderUtil.checkGLError(TAG, "After glDrawArrays")
 
-            GLES20.glDisableVertexAttribArray(mPositionHandle)
+            glDisableVertexAttribArray(mPositionHandle)
             ShaderUtil.checkGLError(TAG, "After draw")
         }
     }

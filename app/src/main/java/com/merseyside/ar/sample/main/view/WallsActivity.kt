@@ -1,9 +1,10 @@
 package com.merseyside.ar.sample.main.view
 
-import android.hardware.Sensor
-import android.hardware.SensorManager
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.ColorInt
+import androidx.core.content.ContextCompat
+import com.google.android.material.slider.Slider
 import com.google.ar.core.*
 import com.merseyside.ar.R
 import com.merseyside.ar.databinding.ActivityWallsBinding
@@ -13,8 +14,10 @@ import com.merseyside.ar.rendering.ObjectRenderer
 import com.merseyside.ar.rendering.PlaneAttachment
 import com.merseyside.ar.rendering.SquareUtil
 import com.merseyside.ar.sample.base.ArActivity
+import com.merseyside.ar.sample.view.paletteView.PaletteHelper
 import com.merseyside.archy.presentation.view.INVISIBLE
 import com.merseyside.archy.presentation.view.VISIBLE
+import com.merseyside.utils.ext.log
 import com.merseyside.utils.ext.onClick
 import com.merseyside.utils.mainThread
 import com.merseyside.utils.time.Seconds
@@ -23,6 +26,7 @@ import kotlinx.coroutines.Job
 
 
 class WallsActivity : ArActivity<ActivityWallsBinding>() {
+
     override fun performInjection(bundle: Bundle?) {}
     override fun getLayoutId() = R.layout.activity_walls
     override fun getToolbar() = null
@@ -30,10 +34,6 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
     override fun getSurfaceViewId() = getBinding().surfaceView.id
 
     private var timerJob: Job? = null
-
-    private lateinit var sensorManager: SensorManager
-    private lateinit var accelSensor: Sensor
-    private lateinit var magneticSensor: Sensor
 
     private var centerX = 0F
     private var centerY = 0F
@@ -72,6 +72,18 @@ class WallsActivity : ArActivity<ActivityWallsBinding>() {
             isShowingPlanes = false
             isShowingPoints = false
         }
+
+        getBinding().palette.setPalette(PaletteHelper.getPaletteList()) {
+            setColor(ContextCompat.getColor(this, it.resId), getBinding().opacity.value.toInt())
+        }
+
+        getBinding().opacity.addOnChangeListener(Slider.OnChangeListener { _, value, _ ->
+            setColor(ContextCompat.getColor(this@WallsActivity, getBinding().palette.getSelected().resId), value.toInt())
+        })
+    }
+
+    private fun setColor(@ColorInt color: Int, alpha: Int) {
+        lineRenderer.setColor(color, alpha)
     }
 
     private fun findAreaSquare() {

@@ -2,4 +2,10 @@
 <resources>
     <attr name="colorLoading" format="color"/>
     <attr name="colorNewsFader" format="color"/>
+
+    <declare-styleable name="PaletteView">
+        <attr name="colorViewSize" format="dimension"/>
+        <attr name="checkSize" format="dimension"/>
+        <attr name="itemPadding" format="dimension"/>
+    </declare-styleable>
 </resources>

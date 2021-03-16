@@ -16,5 +16,8 @@
     <dimen name="largest_text_size">48sp</dimen>
     <dimen name="second_largest_text_size">60sp</dimen>
 
+    <dimen name="small_icon_size">28dp</dimen>
+    <dimen name="palette_corner_size">8dp</dimen>
+
     <dimen name="icon_size">32dp</dimen>
 </resources>
